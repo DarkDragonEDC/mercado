@@ -1,0 +1,302 @@
+{
+  "label": "Albion 1920x1080 - Compra, Venda, Ciclo, Compra Programada e Remover Pedidos - PT-BR",
+  "preset_id": "albion-1920x1080-dpi96-ptbr-buy-v1",
+  "schema_version": 1,
+  "spatial": {
+    "ancora": [
+      0.47447917,
+      0.22777778,
+      0.02083333,
+      0.03425926
+    ],
+    "area_fecha_pedidos": [
+      0.70729167,
+      0.32962963,
+      0.021875,
+      0.2
+    ],
+    "area_lista": [
+      0.25208333,
+      0.33055556,
+      0.49322917,
+      0.56481481
+    ],
+    "btn_criar": [
+      0.4546875,
+      0.70555556
+    ],
+    "btn_mais": [
+      0.43854167,
+      0.59722222
+    ],
+    "btn_nao": [
+      0.52447917,
+      0.53796296,
+      0.075,
+      0.05
+    ],
+    "btn_pedido": [
+      0.65572917,
+      0.35555556,
+      0.07083333,
+      0.05925926
+    ],
+    "btn_proxima": [
+      0.51875,
+      0.87407407
+    ],
+    "btn_sim": [
+      0.4,
+      0.53703704,
+      0.07552083,
+      0.05092593
+    ],
+    "busca_mercado": [
+      0.29583333,
+      0.20462963
+    ],
+    "buy_page_number_area": [
+      0.49166667,
+      0.86111111,
+      0.015625,
+      0.02592593
+    ],
+    "cat_clique_armas": [
+      0.38697917,
+      0.26296296
+    ],
+    "cat_clique_bolsas": [
+      0.390625,
+      0.44259259
+    ],
+    "cat_clique_botas": [
+      0.39010417,
+      0.3537037
+    ],
+    "cat_clique_capacetes": [
+      0.39010417,
+      0.32777778
+    ],
+    "cat_clique_capas": [
+      0.39010417,
+      0.41203704
+    ],
+    "cat_clique_equip_coleta": [
+      0.39166667,
+      0.52407407
+    ],
+    "cat_clique_mao_secundaria": [
+      0.39166667,
+      0.37962963
+    ],
+    "cat_clique_peitoral": [
+      0.38802083,
+      0.29537037
+    ],
+    "cat_clique_principal": [
+      0.390625,
+      0.20648148
+    ],
+    "compra": [
+      0.684375,
+      0.30648148,
+      0.06041667,
+      0.02037037
+    ],
+    "compra_topo_cor": [
+      0.71510417,
+      0.30925926,
+      0.03229167,
+      0.01574074
+    ],
+    "cycle_buy_menu": [
+      0.75885417,
+      0.45185185
+    ],
+    "cycle_collect_all": [
+      0.69322917,
+      0.86296296
+    ],
+    "cycle_counter_area": [
+      0.75052083,
+      0.68703704,
+      0.02552083,
+      0.06481481
+    ],
+    "cycle_sell_menu": [
+      0.76197917,
+      0.36481481
+    ],
+    "drag_end": [
+      0.32447917,
+      0.25833333
+    ],
+    "drag_start": [
+      0.365625,
+      0.76666667
+    ],
+    "icone": [
+      0.18177083,
+      0.22962963,
+      0.0578125,
+      0.09444444
+    ],
+    "nome": [
+      0.24583333,
+      0.23148148,
+      0.22083333,
+      0.03518519
+    ],
+    "preco_final_compra": [
+      0.28958333,
+      0.58148148,
+      0.05208333,
+      0.03148148
+    ],
+    "preco_medio": [
+      0.696875,
+      0.65185185,
+      0.11979167,
+      0.06944444
+    ],
+    "remover_pedidos_area_lista": [
+      0.2609375,
+      0.28333333,
+      0.48645833,
+      0.28333333
+    ],
+    "remover_pedidos_btn_cancelar": [
+      0.70729167,
+      0.33425926,
+      0.0203125,
+      0.04166667
+    ],
+    "remover_pedidos_btn_editar": [
+      0.64010417,
+      0.34537037,
+      0.05833333,
+      0.02777778
+    ],
+    "remover_pedidos_btn_proxima": [
+      0.5234375,
+      0.55
+    ],
+    "remover_pedidos_drag_end": [
+      0.60416667,
+      0.32962963
+    ],
+    "remover_pedidos_drag_start": [
+      0.5984375,
+      0.51666667
+    ],
+    "remover_pedidos_top_end": [
+      0.7390625,
+      0.28240741
+    ],
+    "remover_pedidos_top_start": [
+      0.73645833,
+      0.48981481
+    ],
+    "remover_pedidos_topo_cor": [
+      0.7109375,
+      0.31018519,
+      0.03229167,
+      0.00740741
+    ],
+    "sell_button_sample": [
+      0.64166667,
+      0.35462963,
+      0.07760417,
+      0.05925926
+    ],
+    "sell_buttons_area": [
+      0.6390625,
+      0.33703704,
+      0.08177083,
+      0.49444444
+    ],
+    "sell_close_button": [
+      0.4859375,
+      0.2462963
+    ],
+    "sell_create_button": [
+      0.453125,
+      0.70462963
+    ],
+    "sell_price_minus": [
+      0.25625,
+      0.59722222
+    ],
+    "sell_price_value": [
+      0.2890625,
+      0.5787037,
+      0.05052083,
+      0.03703704
+    ],
+    "shopping_qtd_valor": [
+      0.2515625,
+      0.52685185,
+      0.025,
+      0.01666667
+    ],
+    "top_end": [
+      0.73802083,
+      0.25185185
+    ],
+    "top_start": [
+      0.7375,
+      0.80925926
+    ],
+    "venda": [
+      0.5359375,
+      0.30555556,
+      0.0484375,
+      0.02222222
+    ]
+  },
+  "supported_modes": [
+    "buy",
+    "sell",
+    "cycle",
+    "shopping",
+    "remover_pedidos"
+  ],
+  "target": {
+    "aspect_ratio": 1.777778,
+    "client_height": 1080,
+    "client_width": 1920,
+    "dpi": 96,
+    "game_ui_scale": "94%",
+    "language": "pt-BR"
+  },
+  "templates": {
+    "anchor": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/fechar.png",
+      "sha256": "bcbc37ad616efae047fd6a4bc2f24fc1096fb2b483c88fa964b65221151d4252"
+    },
+    "cancel_button": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/cancelar_pedido_usuario.png",
+      "sha256": "48dc5b95ca5b9ddc54071c1849a178581281c7cdc80417f1a1d18e90ae7b4f4f"
+    },
+    "confirmation_no": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/aviso_nao.png",
+      "sha256": "6afffd13d00da76fb757f72aa54e720feb2c947d6072fb8139ea593c744f10f9"
+    },
+    "confirmation_yes": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/aviso_sim.png",
+      "sha256": "afc0046cff91e5ede3a258afc87957be1948d7c4b54b75a6de6aee4fc349710a"
+    },
+    "edit_button": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/editar_pedido_usuario.png",
+      "sha256": "8df9b675e63e7ffd4f3fad5a96a71bb94dc3608187acad8cf16bab3f48715d0d"
+    },
+    "purchase_order": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/pedido_usuario.png",
+      "sha256": "c54dd076f17c05589d669109a9e393ff0915e855e16414da1ca6c4d273c77c01"
+    },
+    "sell_button": {
+      "path": "assets/albion-1920x1080-dpi96-ptbr-buy-v1/vender_usuario.png",
+      "sha256": "0d9c04cd2319b609d51f5375cd6b857bc290aba18792fcb189778eae371108a4"
+    }
+  }
+}

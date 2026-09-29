@@ -1,0 +1,22 @@
+{
+  "name": "discord-mercadopago-assinaturas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "register": "node src/register-commands.js",
+    "setup-discord": "node src/setup-discord.js",
+    "test": "node --test",
+    "test:licenses": "node test-license-modules.mjs",
+    "verify:license-commands": "node verify-license-commands.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0"
+  }
+}

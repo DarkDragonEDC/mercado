@@ -1,0 +1,23 @@
+LICENCIAMENTO HTTPS
+
+Servidor existente:
+https://botmkt.dkgestao.online
+
+Endpoints utilizados:
+POST /api/licenses/activate
+POST /api/licenses/validate
+
+Modulos reconhecidos por este aplicativo:
+purchase_orders = acesso ao modulo Compra
+sales_orders = acesso ao modulo Venda
+
+O Ciclo Automatico deve exigir os dois modulos: purchase_orders e
+sales_orders. Respostas antigas do servidor que nao possuem o campo modules
+continuam aceitas para manter compatibilidade com keys ja existentes.
+
+O aplicativo nao usa Gist, GitHub CLI, Discord ou credencial administrativa
+para validar licencas. O cliente envia somente key, HWID com hash SHA-256 e
+versao do aplicativo.
+
+O arquivo local license.json contem apenas key, ultima validacao aprovada,
+vencimento informado pelo servidor e versao do aplicativo.
