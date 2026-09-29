@@ -264,7 +264,8 @@ def build_control_state(run, mode, auto_cycle=False, preserve_position=False):
 def build_mini_hud_state(running=False, sell_running=False, cycle_running=False,
                          closing_orders=False, protected_pause=False,
                          intervention_required=False, buy_paused=False,
-                         shopping_running=False, shopping_paused=False):
+                         shopping_running=False, shopping_paused=False,
+                         artefatos_running=False, artefatos_paused=False):
     """Estado textual do controle compacto, independente dos widgets Tk."""
     if intervention_required:
         operation = 'INTERVENÇÃO NECESSÁRIA'
@@ -278,16 +279,21 @@ def build_mini_hud_state(running=False, sell_running=False, cycle_running=False,
         operation = 'COMPRA ATIVA'
     elif shopping_running:
         operation = 'COMPRA PROGRAMADA ATIVA'
+    elif artefatos_running:
+        operation = 'ARTEFATOS ATIVO'
     elif buy_paused:
         operation = 'COMPRA EM PAUSA'
     elif shopping_paused:
         operation = 'COMPRA PROGRAMADA EM PAUSA'
+    elif artefatos_paused:
+        operation = 'ARTEFATOS EM PAUSA'
     else:
         operation = 'AUTOMAÇÃO PARADA'
     return {
         'operation': operation,
         'active': bool(
-            running or sell_running or cycle_running or closing_orders or shopping_running
+            running or sell_running or cycle_running or closing_orders
+            or shopping_running or artefatos_running
         ),
         'protected_pause': bool(protected_pause),
         'intervention_required': bool(intervention_required),
@@ -3957,6 +3963,8 @@ class AlbionBotGUI:
             buy_paused=getattr(self, 'buy_paused', False),
             shopping_running=getattr(self, 'shopping_running', False),
             shopping_paused=getattr(self, 'shopping_paused', False),
+            artefatos_running=getattr(self, 'artefatos_running', False),
+            artefatos_paused=getattr(self, 'artefatos_paused', False),
         )
         now = time.monotonic()
         if state['active'] and not self._mini_was_active:
@@ -3999,7 +4007,11 @@ class AlbionBotGUI:
             state='normal',
         )
         self._mini_pauseresume_btn.config(
-            text='▶ CONTINUAR' if getattr(self, 'buy_paused', False) else '⏸ PAUSAR',
+            text=(
+                '▶ CONTINUAR'
+                if getattr(self, 'buy_paused', False) or getattr(self, 'artefatos_paused', False)
+                else '⏸ PAUSAR'
+            ),
         )
         self._mini_refresh_job = self.root.after(250, self._refresh_mini_hud)
     def _create_cycle_tab(self):
@@ -4700,9 +4712,10 @@ class AlbionBotGUI:
         self.atualizar_botao_artefatos()
 
     def _agendar_poll_artefatos(self):
-        if self._artefatos_poll_job is not None:
+        job = getattr(self, '_artefatos_poll_job', None)
+        if job is not None:
             try:
-                self.root.after_cancel(self._artefatos_poll_job)
+                self.root.after_cancel(job)
             except Exception:
                 pass
         self._artefatos_poll_job = self.root.after(2000, self._poll_artefatos_status)
