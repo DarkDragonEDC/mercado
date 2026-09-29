@@ -134,6 +134,16 @@ REMOVER_PEDIDOS_REQUIRED_KEYS = {
     "remover_pedidos_top_end",
 }
 
+# Modo Artefatos (aba dedicada): mesma varredura da Compra, travada na
+# categoria Artefato e com quantidade por pedido. Exige a navegação de
+# categoria e o campo Quantia (reaproveitado da Compra Programada) mesmo que
+# o usuário não use cat_ativo na aba COMPRA.
+ARTEFATOS_REQUIRED_KEYS = set(BUY_REQUIRED_KEYS) | {
+    "cat_clique_principal",
+    "cat_clique_artefato",
+    "shopping_qtd_valor",
+}
+
 
 class RECT(ctypes.Structure):
     _fields_ = [
@@ -390,6 +400,8 @@ def validate_calibration(
             required = set(SHOPPING_REQUIRED_KEYS)
         elif mode == "remover_pedidos":
             required = set(REMOVER_PEDIDOS_REQUIRED_KEYS)
+        elif mode == "artefatos":
+            required = set(ARTEFATOS_REQUIRED_KEYS)
         elif mode == "cycle":
             required = (
                 set(BUY_REQUIRED_KEYS)

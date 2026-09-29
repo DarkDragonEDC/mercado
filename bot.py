@@ -1238,6 +1238,14 @@ CATEGORIA_CLIQUE_KEYS = {
     "ARTEFATO": "cat_clique_artefato",
 }
 
+def ler_quantidade_artefatos(offsets: dict[str, Any]) -> int:
+    """Quantidade de unidades por pedido do modo Artefatos (mínimo 1)."""
+    try:
+        return max(1, int(offsets.get("artefatos_quantidade", 1) or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
 # Alvo fixo usado pelo modo "artefatos" (aba dedicada): trava a navegação
 # nessa única categoria, independente de cat_ativo/cat_sequence/cat_enabled
 # configurados pelo usuário para a aba COMPRA normal.
@@ -3133,7 +3141,7 @@ def main():
                             smart_sleep(1)
                             continue
                         geometry = get_client_geometry(win)
-                        calibration_ok, calibration_reason = validate_calibration(offsets, geometry, mode="buy")
+                        calibration_ok, calibration_reason = validate_calibration(offsets, geometry, mode=mode)
                         if not calibration_ok:
                             print(f" [!] Calibragem bloqueada: {calibration_reason}", flush=True)
                             pausar_controle()
@@ -3717,7 +3725,12 @@ def main():
                             print(f" [#{progresso_pagina}/50] Item: {nome} | Tier: {tier_log} | Venda: {pv} | Compra: {pc} | Custo: {cost_pct}%", flush=True)
 
                             if eh_oportunidade:
-                                lucro_estimado = pv * 0.93 - pc
+                                # Só o modo Artefatos cria pedidos com mais de 1 unidade;
+                                # com 1, todas as contas abaixo ficam idênticas às de antes.
+                                quantidade_pedido = (
+                                    ler_quantidade_artefatos(offsets) if is_artefatos_mode else 1
+                                )
+                                lucro_estimado = (pv * 0.93 - pc) * quantidade_pedido
                                 if item_icon_prefetch_callback is not None:
                                     try:
                                         item_icon_prefetch_callback(nome, notification_icon)
@@ -3732,9 +3745,10 @@ def main():
                                     pv,
                                     lucro_minimo_percent,
                                     valor_max_prata,
+                                    quantidade_pedido,
                                 )
                                 if comprou:
-                                    gasto_sessao += pc + 1
+                                    gasto_sessao += (pc + 1) * quantidade_pedido
                                     itens_bloqueados_ate.pop(chave_item, None)
                                     if banca_operacional > 0:
                                         print(
@@ -3755,11 +3769,14 @@ def main():
                                                 "encantamento": encantamento,
                                                 "venda": pv,
                                                 "compra": pc,
-                                                "preco_pedido": pc + 1,
+                                                "preco_pedido": (pc + 1) * quantidade_pedido,
                                                 "taxa_pedido": round(
-                                                    (pc + 1) * TAXA_PEDIDO_COMPRA_PERCENTUAL
+                                                    (pc + 1)
+                                                    * quantidade_pedido
+                                                    * TAXA_PEDIDO_COMPRA_PERCENTUAL
                                                 ),
                                                 "lucro_estimado": lucro_estimado,
+                                                "quantidade": quantidade_pedido,
                                             },
                                             ensure_ascii=False,
                                             separators=(",", ":"),

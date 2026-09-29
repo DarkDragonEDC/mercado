@@ -84,6 +84,7 @@ from coordinate_system import (
     SELL_REQUIRED_KEYS,
     SHOPPING_REQUIRED_KEYS,
     REMOVER_PEDIDOS_REQUIRED_KEYS,
+    ARTEFATOS_REQUIRED_KEYS,
     META_KEY,
     capture_region,
     get_client_geometry,
@@ -2255,6 +2256,8 @@ class AlbionBotGUI:
             self.iniciar_bot_venda()
         elif self.current_tab == 'CYCLE':
             self.toggle_cycle_bot()
+        elif self.current_tab == 'ARTEFATOS':
+            self.iniciar_artefatos()
         else:
             self.toggle_bot()
 
@@ -2273,6 +2276,7 @@ class AlbionBotGUI:
             or getattr(self, 'fechando_ordens', False)
             or getattr(self, 'shopping_running', False)
             or getattr(self, 'remover_pedidos_running', False)
+            or getattr(self, 'artefatos_running', False)
         )
 
     def modulo_liberado(self, module, titulo):
@@ -2997,6 +3001,7 @@ class AlbionBotGUI:
             ('CYCLE', 'CICLO', self.show_cycle_tab),
             ('SHOPPING', 'LISTA', self.show_shopping_tab),
             ('REMOVER', 'REMOVER PEDIDOS', self.show_remover_pedidos_tab),
+            ('ARTEFATOS', 'ARTEFATOS', self.show_artefatos_tab),
         ]
         for key, display_name, cmd in primary_tabs:
             btn_3d = self.create_tab_button(self.nav_bar, key, display_name, cmd)
@@ -3246,6 +3251,7 @@ class AlbionBotGUI:
         self._create_cycle_tab()
         self._create_shopping_tab()
         self._create_remover_pedidos_tab()
+        self._create_artefatos_tab()
 
         self.calib_tab = tk.Frame(self.content_area, bg=COLOR_BG)
         back_btn_calib = tk.Label(self.calib_tab, text='←  CONFIGURAÇÕES', fg=COLOR_TEXT_DIM, bg=COLOR_BG, font=('Segoe UI Semibold', 8), cursor='hand2')
@@ -3932,6 +3938,10 @@ class AlbionBotGUI:
             self.continuar_shopping()
         elif getattr(self, 'shopping_running', False):
             self.pausar_shopping()
+        elif getattr(self, 'artefatos_paused', False):
+            self.continuar_artefatos()
+        elif getattr(self, 'artefatos_running', False):
+            self.pausar_artefatos()
 
     def _refresh_mini_hud(self):
         if not getattr(self, 'minimized', False) or not getattr(self, '_mini_win', None):
@@ -4398,7 +4408,7 @@ class AlbionBotGUI:
             btn.pack(fill='x')
 
     def iniciar_remover_pedidos(self):
-        if self.running or self.sell_running or self.cycle_running or getattr(self, 'fechando_ordens', False) or getattr(self, 'shopping_running', False):
+        if self.running or self.sell_running or self.cycle_running or getattr(self, 'fechando_ordens', False) or getattr(self, 'shopping_running', False) or getattr(self, 'artefatos_running', False):
             messagebox.showwarning(
                 'Remover Pedidos',
                 'Pare a outra automação antes de iniciar a remoção de pedidos.',
@@ -4476,6 +4486,247 @@ class AlbionBotGUI:
             self._remover_pedidos_poll_job = None
             return
         self._remover_pedidos_poll_job = self.root.after(2000, self._poll_remover_pedidos_status)
+
+    def _create_artefatos_tab(self):
+        self.artefatos_tab = tk.Frame(self.content_area, bg=COLOR_BG)
+        self.create_page_header(
+            self.artefatos_tab,
+            'Compra dedicada de artefatos',
+            'Artefatos',
+            'Varre só a categoria Artefato criando pedidos de compra com a '
+            'quantidade abaixo. Usa o lucro mínimo, o limite por ordem e a '
+            'banca operacional definidos em AJUSTES.',
+        )
+
+        self.artefatos_start_btn_container = tk.Frame(self.artefatos_tab, bg=COLOR_BG)
+        self.artefatos_start_btn_container.pack(fill='x', padx=12, pady=(8, 4))
+        self.artefatos_running = False
+        self.artefatos_paused = False
+        self._artefatos_poll_job = None
+        self.atualizar_botao_artefatos()
+
+        status_card = tk.Frame(
+            self.artefatos_tab, bg=COLOR_CARD, padx=14, pady=12,
+            highlightthickness=1, highlightbackground=COLOR_BORDER,
+        )
+        status_card.pack(fill='x', padx=12, pady=(8, 6))
+        tk.Label(
+            status_card, text='STATUS DO MÓDULO', bg=COLOR_CARD, fg=COLOR_TEXT_DIM,
+            font=UI_FONTS['caption_strong'],
+        ).pack(anchor='w')
+        self.artefatos_module_status_lbl = tk.Label(
+            status_card, text='VERIFICANDO CALIBRAGEM', bg=COLOR_CARD,
+            fg=COLOR_ACCENT, font=UI_FONTS['section_title'],
+        )
+        self.artefatos_module_status_lbl.pack(anchor='w', pady=(3, 0))
+        tk.Label(
+            status_card,
+            text=(
+                'Exige calibrados: o clique da categoria ARTEFATO, o 1º clique '
+                'de categoria e o campo "Valor da Quantia" (grupo Compra '
+                'Programada), mesmo que você não use a Lista de Compras. O '
+                'limite por ordem vale para o TOTAL do pedido '
+                '(preço × quantidade + taxa).'
+            ),
+            bg=COLOR_CARD, fg=COLOR_TEXT_DIM, font=UI_FONTS['body'],
+            justify='left', wraplength=320,
+        ).pack(anchor='w', pady=(4, 8))
+
+        tk.Label(
+            status_card, text='Quantidade por pedido (unidades)',
+            bg=COLOR_CARD, fg=COLOR_TEXT_DIM, font=UI_FONTS['caption_strong'],
+        ).pack(anchor='w')
+        self.artefatos_quantidade_entry = tk.Entry(
+            status_card, bg=UI_COLORS['field'], fg=COLOR_TEXT, relief='flat',
+            insertbackground=COLOR_TEXT,
+        )
+        self.artefatos_quantidade_entry.insert(0, '1')
+        self.artefatos_quantidade_entry.pack(fill='x', pady=(2, 0))
+        self.carregar_quantidade_artefatos_ui()
+
+        tk.Label(
+            self.artefatos_tab,
+            text='F6 pausa/continua • F8 ou Insert interrompe.',
+            bg=COLOR_BG, fg=COLOR_TEXT_DIM, font=UI_FONTS['caption'], pady=8,
+        ).pack()
+
+        calib_btn = self.create_3d_button(
+            self.artefatos_tab, 'CONFIGURAR ARTEFATOS', type_color='gold',
+            command=self.show_calib_tab,
+        )
+        calib_btn.pack(fill='x', padx=12, pady=(4, 12))
+
+    def show_artefatos_tab(self):
+        self.atualizar_status_calibragem()
+        if not self.artefatos_running:
+            self.carregar_quantidade_artefatos_ui()
+        self.switch_tab('ARTEFATOS', self.artefatos_tab)
+
+    def carregar_quantidade_artefatos_ui(self):
+        entry = getattr(self, 'artefatos_quantidade_entry', None)
+        if entry is None:
+            return
+        data = load_settings('offsets.json')
+        valor = bot.ler_quantidade_artefatos(data if isinstance(data, dict) else {})
+        entry.delete(0, 'end')
+        entry.insert(0, str(valor))
+
+    def salvar_quantidade_artefatos_ui(self):
+        """Lê, valida e persiste a quantidade; devolve o valor válido ou None se inválido."""
+        entry = getattr(self, 'artefatos_quantidade_entry', None)
+        if entry is None:
+            return 1
+        try:
+            valor = int(str(entry.get()).strip())
+            if valor < 1:
+                raise ValueError
+        except ValueError:
+            messagebox.showwarning(
+                'Artefatos',
+                'Quantidade por pedido inválida. Use um número inteiro maior ou igual a 1.',
+            )
+            return None
+        data = load_settings('offsets.json')
+        if not isinstance(data, dict):
+            data = {}
+        data['artefatos_quantidade'] = valor
+        save_settings('offsets.json', data)
+        self.offsets = data
+        return valor
+
+    def atualizar_botao_artefatos(self):
+        container = getattr(self, 'artefatos_start_btn_container', None)
+        if container is None:
+            return
+        for child in container.winfo_children():
+            child.destroy()
+        if getattr(self, 'artefatos_running', False):
+            row = tk.Frame(container, bg=COLOR_BG)
+            row.pack(fill='x')
+            self.create_3d_button(
+                row, '⏸ PAUSAR', type_color='gold', command=self.pausar_artefatos,
+            ).pack(side='left', fill='x', expand=True, padx=(0, 4))
+            self.create_3d_button(
+                row, '■ PARAR', type_color='red', command=self.parar_artefatos,
+            ).pack(side='left', fill='x', expand=True)
+        elif getattr(self, 'artefatos_paused', False):
+            row = tk.Frame(container, bg=COLOR_BG)
+            row.pack(fill='x')
+            self.create_3d_button(
+                row, '▶ CONTINUAR', type_color='green', command=self.continuar_artefatos,
+            ).pack(side='left', fill='x', expand=True, padx=(0, 4))
+            self.create_3d_button(
+                row, '■ PARAR', type_color='red', command=self.parar_artefatos,
+            ).pack(side='left', fill='x', expand=True)
+        else:
+            self.create_3d_button(
+                container, '▶ INICIAR COMPRA DE ARTEFATOS',
+                type_color='green', command=self.iniciar_artefatos,
+            ).pack(fill='x')
+
+    def iniciar_artefatos(self):
+        if not self.modulo_liberado(MODULE_PURCHASE, 'a Compra de Artefatos'):
+            return
+        if (
+            self.running or self.sell_running or self.cycle_running
+            or getattr(self, 'fechando_ordens', False)
+            or getattr(self, 'shopping_running', False)
+            or getattr(self, 'remover_pedidos_running', False)
+        ):
+            messagebox.showwarning(
+                'Artefatos',
+                'Pare a outra automação antes de iniciar a compra de artefatos.',
+            )
+            return
+        if self.salvar_quantidade_artefatos_ui() is None:
+            return
+        if not self.salvar_ajustes_financeiros(notificar=False):
+            messagebox.showerror(
+                'Ajustes financeiros',
+                'Corrija os limites financeiros antes de iniciar o bot.',
+            )
+            return
+        if not self.validar_calibragem_para_modo('artefatos'):
+            return
+        self.minimizar_para_execucao()
+        self.artefatos_running = True
+        self.artefatos_paused = False
+        self.artefatos_module_status_lbl.config(text='COMPRANDO ARTEFATOS', fg=COLOR_SUCCESS)
+        with open(CONTROL_FILE, 'w', encoding='utf-8') as handle:
+            json.dump(build_control_state(True, 'artefatos', False), handle)
+        self.log('>>> Compra de Artefatos iniciada.')
+        self.atualizar_botao_artefatos()
+        self._agendar_poll_artefatos()
+
+    def pausar_artefatos(self):
+        if not self.artefatos_running:
+            return
+        self.artefatos_running = False
+        self.artefatos_paused = True
+        self.artefatos_module_status_lbl.config(text='EM PAUSA', fg=COLOR_ACCENT)
+        with open(CONTROL_FILE, 'w', encoding='utf-8') as handle:
+            json.dump(
+                build_control_state(False, 'artefatos', False, preserve_position=True),
+                handle,
+            )
+        self.log('>>> Compra de Artefatos pausada; a posição foi salva para continuar depois.')
+        self.atualizar_botao_artefatos()
+
+    def continuar_artefatos(self):
+        if not self.artefatos_paused:
+            return
+        self.artefatos_running = True
+        self.artefatos_paused = False
+        self.artefatos_module_status_lbl.config(text='COMPRANDO ARTEFATOS', fg=COLOR_SUCCESS)
+        with open(CONTROL_FILE, 'w', encoding='utf-8') as handle:
+            json.dump(
+                build_control_state(True, 'artefatos', False, preserve_position=True),
+                handle,
+            )
+        self.log('>>> Compra de Artefatos retomada de onde parou.')
+        self.atualizar_botao_artefatos()
+        self._agendar_poll_artefatos()
+
+    def parar_artefatos(self):
+        self.artefatos_running = False
+        self.artefatos_paused = False
+        try:
+            self.artefatos_module_status_lbl.config(text='PARADO', fg=COLOR_TEXT_DIM)
+        except Exception:
+            pass
+        with open(CONTROL_FILE, 'w', encoding='utf-8') as handle:
+            json.dump(build_control_state(False, 'buy', False), handle)
+        self.log('>>> Compra de Artefatos parada.')
+        self.atualizar_botao_artefatos()
+
+    def _agendar_poll_artefatos(self):
+        if self._artefatos_poll_job is not None:
+            try:
+                self.root.after_cancel(self._artefatos_poll_job)
+            except Exception:
+                pass
+        self._artefatos_poll_job = self.root.after(2000, self._poll_artefatos_status)
+
+    def _poll_artefatos_status(self):
+        """Detecta quando o próprio bot encerrou o modo (fim da categoria, bloqueio etc.)."""
+        if not self.artefatos_running:
+            self._artefatos_poll_job = None
+            return
+        try:
+            with open(CONTROL_FILE, 'r', encoding='utf-8') as handle:
+                estado = json.load(handle)
+        except Exception:
+            estado = {}
+        if not estado.get('run', True) or estado.get('mode') != 'artefatos':
+            self.artefatos_running = False
+            try:
+                self.artefatos_module_status_lbl.config(text='PARADO PELO BOT', fg=COLOR_TEXT_DIM)
+            except Exception:
+                pass
+            self.atualizar_botao_artefatos()
+            self._artefatos_poll_job = None
+            return
+        self._artefatos_poll_job = self.root.after(2000, self._poll_artefatos_status)
 
     def carregar_lista_compras_ui(self):
         dados = load_settings(LISTA_COMPRAS_FILE)
@@ -4764,7 +5015,7 @@ class AlbionBotGUI:
     def iniciar_shopping(self):
         if not self.modulo_liberado(MODULE_PURCHASE, 'a Compra Programada'):
             return
-        if self.running or self.sell_running or self.cycle_running or getattr(self, 'fechando_ordens', False) or getattr(self, 'remover_pedidos_running', False):
+        if self.running or self.sell_running or self.cycle_running or getattr(self, 'fechando_ordens', False) or getattr(self, 'remover_pedidos_running', False) or getattr(self, 'artefatos_running', False):
             messagebox.showwarning(
                 'Compra Programada',
                 'Pare a outra automação antes de iniciar a compra programada.',
@@ -4970,6 +5221,7 @@ class AlbionBotGUI:
                 or getattr(self, 'fechando_ordens', False)
                 or getattr(self, 'shopping_running', False)
                 or getattr(self, 'remover_pedidos_running', False)
+                or getattr(self, 'artefatos_running', False)
             ):
                 messagebox.showwarning('Ciclo automático', 'Pare a outra automação antes de iniciar o ciclo.')
                 return
@@ -5033,6 +5285,7 @@ class AlbionBotGUI:
                 or getattr(self, 'fechando_ordens', False)
                 or getattr(self, 'shopping_running', False)
                 or getattr(self, 'remover_pedidos_running', False)
+                or getattr(self, 'artefatos_running', False)
             ):
                 messagebox.showwarning('Bot de venda', 'Pare a outra automação antes de iniciar a venda.')
                 return
@@ -5083,6 +5336,7 @@ class AlbionBotGUI:
             getattr(self, 'cycle_tab', None),
             getattr(self, 'shopping_tab', None),
             getattr(self, 'remover_pedidos_tab', None),
+            getattr(self, 'artefatos_tab', None),
             getattr(self, 'calib_tab', None),
             getattr(self, 'seq_tab', None),
             getattr(self, 'cliq_tab', None),
@@ -5465,6 +5719,8 @@ class AlbionBotGUI:
             1 for key in REMOVER_PEDIDOS_REQUIRED_KEYS if data.get(key)
         )
         remover_pedidos_ready = remover_pedidos_completed == len(REMOVER_PEDIDOS_REQUIRED_KEYS)
+        artefatos_completed = sum(1 for key in ARTEFATOS_REQUIRED_KEYS if data.get(key))
+        artefatos_ready = artefatos_completed == len(ARTEFATOS_REQUIRED_KEYS)
         buy_ready = completed == len(required)
         full_cycle_ready = buy_ready and sell_ready and cycle_ready
         if hasattr(self, 'shopping_module_status_lbl') and not getattr(self, 'shopping_running', False):
@@ -5488,6 +5744,19 @@ class AlbionBotGUI:
                         else f'CALIBRAGEM PENDENTE {remover_pedidos_completed}/{len(REMOVER_PEDIDOS_REQUIRED_KEYS)}'
                     ),
                     fg=COLOR_SUCCESS if remover_pedidos_ready else COLOR_ACCENT,
+                )
+            except Exception:
+                pass
+        if hasattr(self, 'artefatos_module_status_lbl') and not getattr(
+            self, 'artefatos_running', False
+        ) and not getattr(self, 'artefatos_paused', False):
+            try:
+                self.artefatos_module_status_lbl.config(
+                    text=(
+                        'PRONTO PARA INICIAR' if artefatos_ready
+                        else f'CALIBRAGEM PENDENTE {artefatos_completed}/{len(ARTEFATOS_REQUIRED_KEYS)}'
+                    ),
+                    fg=COLOR_SUCCESS if artefatos_ready else COLOR_ACCENT,
                 )
             except Exception:
                 pass
@@ -6786,10 +7055,10 @@ class AlbionBotGUI:
             geometry = get_client_geometry(win)
             data = load_settings('offsets.json')
             valid, reason = validate_calibration(data, geometry, mode=mode)
-            if valid and mode in {'buy', 'cycle'} and not os.path.exists(calibration_template_path('pedido_usuario.png')):
+            if valid and mode in {'buy', 'cycle', 'artefatos'} and not os.path.exists(calibration_template_path('pedido_usuario.png')):
                 valid = False
                 reason = 'Calibre AMOSTRA BOTÃO PEDIDO para este computador.'
-            if valid and mode in {'buy', 'cycle'} and not os.path.exists(calibration_template_path('aviso_nao.png')):
+            if valid and mode in {'buy', 'cycle', 'artefatos'} and not os.path.exists(calibration_template_path('aviso_nao.png')):
                 valid = False
                 reason = 'Calibre BOTÃO NÃO (Cancelar) para este computador.'
             if valid and mode == 'remover_pedidos' and not os.path.exists(calibration_template_path('editar_pedido_usuario.png')):
@@ -6821,6 +7090,7 @@ class AlbionBotGUI:
                 or getattr(self, 'fechando_ordens', False)
                 or getattr(self, 'shopping_running', False)
                 or getattr(self, 'remover_pedidos_running', False)
+                or getattr(self, 'artefatos_running', False)
             ):
                 messagebox.showwarning('MKT', 'Pare a outra automação antes de iniciar a compra.')
                 return
@@ -6881,16 +7151,23 @@ class AlbionBotGUI:
         self.fechando_ordens = False
         self.shopping_running = False
         self.shopping_paused = False
+        self.artefatos_running = False
+        self.artefatos_paused = False
         try:
             self.atualizar_botao_inicial()
             self.atualizar_botao_venda()
             self.atualizar_botao_ciclo()
             self.atualizar_botao_shopping()
+            self.atualizar_botao_artefatos()
             self.card_status.config(text='PARADO', fg=COLOR_TEXT_DIM)
         except Exception:
             pass
         try:
             self.shopping_module_status_lbl.config(text='PARADA', fg=COLOR_TEXT_DIM)
+        except Exception:
+            pass
+        try:
+            self.artefatos_module_status_lbl.config(text='PARADO', fg=COLOR_TEXT_DIM)
         except Exception:
             pass
         try:
@@ -6936,7 +7213,7 @@ class AlbionBotGUI:
         # ***<module>.AlbionBotGUI.toggle_fechamento: Failure detected at line number 1218 and instruction offset 124: Different bytecode
         self.fechando_ordens = getattr(self, 'fechando_ordens', False)
         if not self.fechando_ordens:
-            if self.running or self.sell_running or self.cycle_running or getattr(self, 'remover_pedidos_running', False):
+            if self.running or self.sell_running or self.cycle_running or getattr(self, 'remover_pedidos_running', False) or getattr(self, 'artefatos_running', False):
                 messagebox.showwarning('MKT', 'Pare a outra automação antes de fechar ordens.')
                 return
             if not self.validar_calibragem_para_modo('close'):
